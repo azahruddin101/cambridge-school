@@ -52,3 +52,6 @@ export const navigation = [
   { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/contact" },
 ];
+
+// Options for "Class applying for" on the enquiry form (also validated on the server)
+export const enquiryClasses = ["Class I", "Class II", "Class III", "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Other / not sure"];

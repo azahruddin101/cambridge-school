@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Sidebar from "@/components/admin/Sidebar";
+import NewEnquiriesBadge from "@/components/admin/NewEnquiriesBadge";
 import { Spinner, ToastProvider } from "@/components/admin/ui";
 
 function Loading() {
@@ -14,7 +15,13 @@ export default function PanelLayout({ children }) {
   return (
     <ToastProvider>
       <div className="lg:grid lg:grid-cols-[260px_1fr]">
-        <Sidebar />
+        <Sidebar
+          enquiriesBadge={
+            <Suspense fallback={null}>
+              <NewEnquiriesBadge />
+            </Suspense>
+          }
+        />
         <main className="min-w-0 px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
           <div className="mx-auto max-w-6xl">
             {/* Admin pages read the session cookie and fresh data at request time */}

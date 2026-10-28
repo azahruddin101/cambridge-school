@@ -89,3 +89,21 @@ export const AdminUser = model(
     { timestamps: true },
   ),
 );
+
+export const ENQUIRY_STATUSES = ["new", "contacted", "closed"];
+
+// Admission enquiries submitted through the contact form
+export const Enquiry = model(
+  "Enquiry",
+  new Schema(
+    {
+      name: { type: String, required: true, trim: true, maxlength: 100 },
+      phone: { type: String, required: true, trim: true, maxlength: 20 },
+      email: { type: String, trim: true, lowercase: true, maxlength: 120, default: "" },
+      studentClass: { type: String, trim: true, maxlength: 40, default: "" },
+      message: { type: String, trim: true, maxlength: 1000, default: "" },
+      status: { type: String, enum: ENQUIRY_STATUSES, default: "new", index: true },
+    },
+    { timestamps: true },
+  ),
+);

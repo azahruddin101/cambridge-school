@@ -1,7 +1,7 @@
 "use server";
 
-import { updateTag } from "next/cache";
-import { FeeStructure, GalleryImage, StudentStrength } from "@/lib/server/models";
+import { refresh, updateTag } from "next/cache";
+import { ENQUIRY_STATUSES, Enquiry, FeeStructure, GalleryImage, StudentStrength } from "@/lib/server/models";
 import { TAGS } from "@/lib/server/data";
 import { ValidationError, adminAction, moveInOrder, nextOrder, objectId, text } from "@/lib/server/admin";
 import { deletePerson, movePerson, savePerson } from "@/lib/server/people";
@@ -134,5 +134,26 @@ export async function saveStrength(input) {
     // Student totals feed the home page stats too, which read this tag
     updateTag(TAGS.strength);
     return "Student strength saved.";
+  });
+}
+
+/* ---------- Enquiries from the contact form ---------- */
+
+export async function setEnquiryStatus(id, status) {
+  return adminAction(async () => {
+    if (!ENQUIRY_STATUSES.includes(status)) throw new ValidationError("Unknown status.");
+    const doc = await Enquiry.findByIdAndUpdate(objectId(id), { status });
+    if (!doc) throw new ValidationError("This enquiry no longer exists.");
+    refresh(); // updates the list and the sidebar's "new" badge
+    return status === "new" ? `${doc.name} marked as new.` : `${doc.name} marked as ${status}.`;
+  });
+}
+
+export async function deleteEnquiry(id) {
+  return adminAction(async () => {
+    const doc = await Enquiry.findByIdAndDelete(objectId(id));
+    if (!doc) throw new ValidationError("This enquiry no longer exists.");
+    refresh();
+    return "Enquiry deleted.";
   });
 }

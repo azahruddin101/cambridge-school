@@ -8,6 +8,7 @@ import { logout } from "@/app/admin/_actions/auth";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: "M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10" },
+  { href: "/admin/enquiries", label: "Enquiries", icon: "M4 6h16v12H4zM4 7l8 6 8-6" },
   { href: "/admin/committee", label: "Managing Committee", icon: "M17 20h5v-2a4 4 0 00-5-3.87M9 20H2v-2a4 4 0 015-3.87m6-4.13a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 11-6 0 3 3 0 016 0z" },
   { href: "/admin/faculty", label: "Faculty", icon: "M12 14l9-5-9-5-9 5 9 5zm0 0v7m-6-4.5V12" },
   { href: "/admin/fees", label: "Fee Structure", icon: "M9 7h6m-6 4h6m-6 4h4M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z" },
@@ -25,7 +26,7 @@ function NavIcon({ d }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ enquiriesBadge }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const isActive = (href) => (href === "/admin" ? pathname === href : pathname.startsWith(href));
@@ -70,6 +71,7 @@ export default function Sidebar() {
                   >
                     <NavIcon d={item.icon} />
                     {item.label}
+                    {item.href === "/admin/enquiries" && enquiriesBadge}
                   </Link>
                 </li>
               ))}

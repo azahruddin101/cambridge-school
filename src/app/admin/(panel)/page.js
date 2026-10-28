@@ -2,15 +2,24 @@ import Link from "next/link";
 import PageHeader from "@/components/admin/PageHeader";
 import { requireAdmin } from "@/lib/server/auth";
 import { getCommittee, getFaculty, getFees, getStrength, sumStrength } from "@/lib/server/data";
+import { Enquiry } from "@/lib/server/models";
 
 export const metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const admin = await requireAdmin();
-  const [committee, faculty, fees, strength] = await Promise.all([getCommittee(), getFaculty(), getFees(), getStrength()]);
+  const [committee, faculty, fees, strength, newEnquiries, allEnquiries] = await Promise.all([
+    getCommittee(),
+    getFaculty(),
+    getFees(),
+    getStrength(),
+    Enquiry.countDocuments({ status: "new" }),
+    Enquiry.estimatedDocumentCount(),
+  ]);
   const totals = sumStrength(strength);
 
   const cards = [
+    { href: "/admin/enquiries?status=new", label: "New enquiries", value: newEnquiries, detail: `${allEnquiries} received in total`, site: "/contact" },
     { href: "/admin/committee", label: "Managing Committee", value: committee.length, detail: "members", site: "/administration#committee" },
     { href: "/admin/faculty", label: "Faculty", value: faculty.length, detail: "staff members", site: "/administration#staff" },
     { href: "/admin/fees", label: "Fee Structure", value: fees.rows.length, detail: fees.session ? `fee heads · ${fees.session}` : "fee heads", site: "/admissions/fee-structure" },

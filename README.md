@@ -27,11 +27,11 @@ Sign in at `/admin` with the account created by `npm run seed`, then change the 
 
 | Section | What it controls |
 | --- | --- |
+| Enquiries | Admission enquiries from the form on `/contact` — status (new → contacted → closed), search, one-tap call / WhatsApp / email. The sidebar shows a count of new ones |
 | Managing Committee | Members on `/administration` — name, role, place, optional photo, order |
 | Faculty | Staff on `/administration` — name, designation, qualification, optional photo, order. Also drives the teacher count on the home page |
 | Fee Structure | Fee heads per class group and the payment schedule on `/admissions/fee-structure`. Totals are calculated |
 | Student Strength | Class-wise sections, boys and girls on `/admissions/student-strength`. Also drives the student count on the home page |
-| Gallery | Photos on `/gallery`; the first five also appear on the home page |
 
 Changes appear on the website as soon as they're saved.
 
