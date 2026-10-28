@@ -4,9 +4,10 @@ const nextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   experimental: {
-    // Admin photo uploads go through Server Actions (and the /admin proxy), both 1–10 MB by default
-    serverActions: { bodySizeLimit: "40mb" },
-    proxyClientMaxBodySize: "40mb",
+    // Admin photo uploads go through Server Actions (and the /admin proxy). Vercel caps
+    // requests at 4.5 MB anyway, so the admin panel shrinks photos and sends one at a time.
+    serverActions: { bodySizeLimit: "4mb" },
+    proxyClientMaxBodySize: "4mb",
   },
   // Keep links to the old WordPress site (e.g. /?page_id=379) working
   async redirects() {

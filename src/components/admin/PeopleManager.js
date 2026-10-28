@@ -3,6 +3,7 @@
 import { useActionState, useCallback, useState, useTransition } from "react";
 import Image from "next/image";
 import { deletePersonAction, movePersonAction, savePersonAction } from "@/app/admin/_actions/content";
+import { shrinkImage } from "./shrinkImage";
 import { Button, Card, ConfirmButton, EmptyState, Field, IconButton, SubmitButton, inputClass, useActionResult, useToast } from "./ui";
 
 /**
@@ -155,7 +156,17 @@ function PersonForm({ kind, person, roleLabel, roleSuggestions, extraField, onDo
             name="photo"
             accept="image/jpeg,image/png,image/webp"
             className="sr-only"
-            onChange={(e) => setPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null)}
+            onChange={async (e) => {
+              const input = e.target;
+              const picked = input.files?.[0];
+              if (!picked) return setPreview(null);
+              // Swap in a downscaled copy so the form stays under host request limits
+              const small = await shrinkImage(picked, { maxSize: 1200 });
+              const transfer = new DataTransfer();
+              transfer.items.add(small);
+              input.files = transfer.files;
+              setPreview(URL.createObjectURL(small));
+            }}
           />
         </label>
         {person?.photo && !preview && (

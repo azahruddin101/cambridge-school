@@ -11,7 +11,6 @@ MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>/cambridge?retryWrites=true
 JWT_SECRET=<long random string, e.g. `openssl rand -base64 48`>
 ADMIN_USERNAME=admin               # first admin account, created by `npm run seed`
 ADMIN_PASSWORD=<10+ characters>
-UPLOAD_DIR=uploads                 # where uploaded images are stored
 ```
 
 ```bash
@@ -39,17 +38,17 @@ Changes appear on the website as soon as they're saved.
 ### How it works
 
 - **Authentication** — the login form checks the password (bcrypt) and sets a signed JWT (HS256, 7 days) in an `httpOnly` cookie. `src/proxy.js` redirects requests without a valid token to the login page; every admin page and Server Action also calls `requireAdmin()`, which checks the account still exists and the token hasn't been revoked. Changing the password signs out all other sessions. Failed logins are limited to 5 per 15 minutes per IP and username.
-- **Uploads** — images are validated, auto-rotated, stripped of metadata (e.g. phone GPS), resized and converted to WebP, then saved to `uploads/<section>/<random-id>.webp` and served by `src/app/uploads/[...path]/route.js`. The `uploads/` folder is gitignored: back it up along with the database.
+- **Uploads** — the admin panel shrinks large photos in the browser and sends them one per request (Vercel caps requests at 4.5 MB). The server validates each image, auto-rotates it, strips metadata (e.g. phone GPS), resizes it and converts it to WebP, then stores it in MongoDB (GridFS, `uploads` bucket). `src/app/uploads/[...path]/route.js` serves them at `/uploads/<section>/<random-id>.webp` with long-lived CDN caching. Backing up the database backs up the images too.
 - **Caching** — public pages are prerendered from MongoDB with `"use cache"` and tagged per section (`src/lib/server/data.js`). Admin actions call `updateTag()` after saving, so the next visit gets fresh data.
-- **Hosting** — uploads are written to the server's disk, so run it on a server with a persistent filesystem (a VPS, or a container with a mounted volume). Serverless hosts such as Vercel discard written files.
+- **Hosting** — nothing is written to disk, so it runs on Vercel or any Node host. Set `MONGODB_URI` and `JWT_SECRET` in the host's environment variables; the build reads the database to prerender pages, so Atlas must allow connections from the build servers.
 
 ## Structure
 
 ```
 public/images/               Static WebP assets (brand, campus, life, facilities, people)
-uploads/                     Uploaded images (runtime data, gitignored)
 scripts/
   seed.mjs, seed-data.mjs    First admin account + initial content
+  migrate-uploads.mjs        One-off: copies images from an old local uploads/ folder into MongoDB
   optimize-images.mjs        Converts original photo downloads → public/images (sharp)
   build-logo.mjs             Builds logo.webp, emblem.webp and the app icon from the master logo
 src/
@@ -61,7 +60,7 @@ src/
       login/                 Sign-in page
       (panel)/               Dashboard, committee, faculty, fees, strength, gallery, account
       _actions/              Server Actions (auth, content)
-    uploads/[...path]/       Serves uploaded images
+    uploads/[...path]/       Serves uploaded images from MongoDB
   components/
     admin/                   Admin UI (PeopleManager, GalleryManager, FeesEditor, StrengthEditor…)
     layout/ motion/ providers/ sections/ ui/   Public site components

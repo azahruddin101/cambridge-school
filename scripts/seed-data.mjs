@@ -74,7 +74,7 @@ export const strength = [
   { cls: "VIII", sections: 1, boys: 22, girls: 3 },
 ];
 
-// Copied from public/images into the uploads folder by the seed script
+// Stored in MongoDB (GridFS) by the seed script
 export const gallery = [
   { src: "/images/campus/main-building.webp", alt: "The main building of Eastern Cambridge School", width: 1280, height: 590 },
   { src: "/images/life/sports-champions.webp", alt: "School sports team with their trophies", width: 1280, height: 853 },

@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useCallback, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { deleteGalleryImage, moveGalleryImage, updateGalleryCaption, uploadGalleryImages } from "@/app/admin/_actions/content";
-import { Button, Card, ConfirmButton, EmptyState, Field, IconButton, SubmitButton, inputClass, useActionResult, useToast } from "./ui";
+import { Button, Card, ConfirmButton, EmptyState, Field, IconButton, Spinner, inputClass, useToast } from "./ui";
+import { shrinkImage } from "./shrinkImage";
 
 const MAX_FILES = 12;
 
@@ -91,45 +92,58 @@ function CaptionEditor({ image, onSave, disabled }) {
 }
 
 function UploadForm() {
-  const [state, action] = useActionState(uploadGalleryImages, null);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState("");
   const formRef = useRef(null);
   const toast = useToast();
-
-  useActionResult(
-    state,
-    useCallback(
-      (result) => {
-        toast(result);
-        if (result.ok) {
-          formRef.current?.reset();
-          setFiles([]);
-        }
-      },
-      [toast],
-    ),
-  );
+  const busy = Boolean(progress);
 
   const onPick = (e) => {
     const picked = [...(e.target.files ?? [])];
     setError(picked.length > MAX_FILES ? `Choose up to ${MAX_FILES} photos at a time.` : "");
-    setFiles(picked.slice(0, MAX_FILES).map((file) => ({ name: file.name, url: URL.createObjectURL(file) })));
+    setFiles(picked.slice(0, MAX_FILES).map((file) => ({ file, url: URL.createObjectURL(file) })));
+  };
+
+  // One photo per request keeps each under the host's request size limit (4.5 MB on Vercel)
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!files.length || busy) return;
+    const alt = new FormData(e.currentTarget).get("alt") ?? "";
+    const failures = [];
+
+    for (const [i, { file }] of files.entries()) {
+      setProgress(files.length > 1 ? `Uploading ${i + 1} of ${files.length}…` : "Uploading…");
+      const body = new FormData();
+      body.append("files", await shrinkImage(file));
+      body.append("alt", alt);
+      const result = await uploadGalleryImages(null, body).catch(() => ({ ok: false, message: `${file.name}: upload failed.` }));
+      if (!result.ok) failures.push(result.message);
+    }
+
+    setProgress("");
+    const added = files.length - failures.length;
+    if (added) toast({ ok: true, message: added === 1 ? "Photo added." : `${added} photos added.` });
+    failures.forEach((message) => toast({ ok: false, message }));
+    if (!failures.length) {
+      formRef.current?.reset();
+      setFiles([]);
+    }
   };
 
   return (
     <Card className="p-6">
       <h2 className="mb-1 font-medium">Upload photos</h2>
-      <p className="mb-5 text-sm text-ink/55">JPG, PNG or WebP, up to 8 MB each and {MAX_FILES} at a time. Photos are resized and converted to WebP automatically.</p>
+      <p className="mb-5 text-sm text-ink/55">JPG, PNG or WebP, {MAX_FILES} at a time. Large photos are shrunk before uploading, then converted to WebP automatically.</p>
 
-      <form ref={formRef} action={action} className="space-y-4">
+      <form ref={formRef} onSubmit={onSubmit} className="space-y-4">
         <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line bg-ivory/50 px-6 py-10 text-center transition-colors hover:border-forest/40 hover:bg-ivory">
           <span className="text-3xl" aria-hidden="true">
             ⬆
           </span>
           <span className="font-medium">Click to choose photos</span>
           <span className="text-sm text-ink/50">{files.length ? `${files.length} selected` : "You can select several at once"}</span>
-          <input type="file" name="files" multiple required accept="image/jpeg,image/png,image/webp" onChange={onPick} className="sr-only" />
+          <input type="file" name="files" multiple required accept="image/jpeg,image/png,image/webp" onChange={onPick} disabled={busy} className="sr-only" />
         </label>
 
         {error && <p className="text-sm text-[#9f2d1f]">{error}</p>}
@@ -138,7 +152,7 @@ function UploadForm() {
           <ul className="flex flex-wrap gap-2">
             {files.map((f) => (
               <li key={f.url} className="relative size-20 overflow-hidden rounded-lg bg-ivory-deep">
-                <Image src={f.url} alt={f.name} fill unoptimized sizes="80px" className="object-cover" />
+                <Image src={f.url} alt={f.file.name} fill unoptimized sizes="80px" className="object-cover" />
               </li>
             ))}
           </ul>
@@ -148,9 +162,10 @@ function UploadForm() {
           <input name="alt" maxLength={200} placeholder="e.g. Annual sports day 2026" className={inputClass} />
         </Field>
 
-        <SubmitButton pendingText={`Uploading ${files.length || ""} photo${files.length === 1 ? "" : "s"}…`}>
-          Upload
-        </SubmitButton>
+        <Button type="submit" variant="primary" disabled={busy || !files.length}>
+          {busy && <Spinner />}
+          {busy ? progress : "Upload"}
+        </Button>
       </form>
     </Card>
   );

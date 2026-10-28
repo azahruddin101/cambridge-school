@@ -6,7 +6,7 @@
  * Usage: npm run seed   (reads MONGODB_URI, ADMIN_USERNAME, ADMIN_PASSWORD from .env.local)
  */
 import { randomUUID } from "node:crypto";
-import { copyFile, mkdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
@@ -14,7 +14,6 @@ import { AdminUser, CommitteeMember, Faculty, FeeStructure, GalleryImage, Studen
 import * as data from "./seed-data.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const UPLOAD_ROOT = path.resolve(ROOT, process.env.UPLOAD_DIR || "uploads");
 const { MONGODB_URI, ADMIN_USERNAME = "admin", ADMIN_PASSWORD } = process.env;
 
 if (!MONGODB_URI) throw new Error("MONGODB_URI is not set (see .env.example).");
@@ -46,14 +45,20 @@ await seedIfEmpty(FeeStructure, "fee structure", async () => (await FeeStructure
 await seedIfEmpty(StudentStrength, "student strength", async () => (await StudentStrength.create({ rows: data.strength }), 1));
 
 await seedIfEmpty(GalleryImage, "gallery", async () => {
-  // Copy the starter photos into uploads/ so they're managed like any upload
-  const dir = path.join(UPLOAD_ROOT, "gallery");
-  await mkdir(dir, { recursive: true });
+  // Store the starter photos in MongoDB (GridFS) so they're managed like any upload
+  const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: "uploads" });
   const docs = [];
   for (const [order, image] of data.gallery.entries()) {
-    const name = `${randomUUID()}.webp`;
-    await copyFile(path.join(ROOT, "public", image.src), path.join(dir, name));
-    docs.push({ src: `/uploads/gallery/${name}`, alt: image.alt, width: image.width, height: image.height, order });
+    const filename = `gallery/${randomUUID()}.webp`;
+    const bytes = await readFile(path.join(ROOT, "public", image.src));
+    await new Promise((resolve, reject) => {
+      bucket
+        .openUploadStream(filename, { metadata: { contentType: "image/webp", width: image.width, height: image.height } })
+        .once("finish", resolve)
+        .once("error", reject)
+        .end(bytes);
+    });
+    docs.push({ src: `/uploads/${filename}`, alt: image.alt, width: image.width, height: image.height, order });
   }
   return (await GalleryImage.insertMany(docs)).length;
 });
