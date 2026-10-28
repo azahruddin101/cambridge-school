@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import PageHero from "@/components/ui/PageHero";
 import GalleryGrid from "@/components/sections/gallery/GalleryGrid";
-import { images } from "@/data/content";
-import { getGallery } from "@/lib/server/data";
+import { gallery, images } from "@/data/content";
 
 export const metadata = {
   title: "Gallery",
@@ -13,8 +12,7 @@ export const metadata = {
 // already on page 3; the hero above stays part of the prerendered shell.
 async function Gallery({ searchParams }) {
   await searchParams;
-  const gallery = await getGallery();
-  return gallery.length ? <GalleryGrid items={gallery} /> : <p className="text-lg text-ink/60">Photos will be added soon.</p>;
+  return <GalleryGrid items={gallery} />;
 }
 
 function GallerySkeleton() {

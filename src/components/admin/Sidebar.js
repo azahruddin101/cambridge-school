@@ -12,7 +12,8 @@ const NAV = [
   { href: "/admin/faculty", label: "Faculty", icon: "M12 14l9-5-9-5-9 5 9 5zm0 0v7m-6-4.5V12" },
   { href: "/admin/fees", label: "Fee Structure", icon: "M9 7h6m-6 4h6m-6 4h4M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z" },
   { href: "/admin/strength", label: "Student Strength", icon: "M4 20V10m6 10V4m6 16v-7m4 7H2" },
-  { href: "/admin/gallery", label: "Gallery", icon: "M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M15 9h.01" },
+  // Gallery is static for now (src/data/content.js); re-add this entry when it's dynamic again:
+  // { href: "/admin/gallery", label: "Gallery", icon: "M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M15 9h.01" },
   { href: "/admin/account", label: "Account", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zm-7 9a7 7 0 0114 0" },
 ];
 

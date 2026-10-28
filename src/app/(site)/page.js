@@ -6,13 +6,11 @@ import Facilities from "@/components/sections/home/Facilities";
 import Programs from "@/components/sections/home/Programs";
 import GalleryRail from "@/components/sections/home/GalleryRail";
 import Marquee from "@/components/motion/Marquee";
-import { getGallery } from "@/lib/server/data";
+import { gallery } from "@/data/content";
 
 const MARQUEE = ["Smart Classes", "Science Lab", "Computer Lab", "Safe Conveyance", "Values-led Learning", "Virtue of Wisdom"];
 
-export default async function Home() {
-  const gallery = await getGallery();
-
+export default function Home() {
   return (
     <>
       <Hero />
@@ -22,7 +20,7 @@ export default async function Home() {
       <ChairmanMessage />
       <Facilities />
       <Programs />
-      {gallery.length > 0 && <GalleryRail items={gallery.slice(0, 5)} />}
+      <GalleryRail items={gallery.slice(0, 5)} />
     </>
   );
 }

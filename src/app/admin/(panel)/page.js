@@ -1,13 +1,13 @@
 import Link from "next/link";
 import PageHeader from "@/components/admin/PageHeader";
 import { requireAdmin } from "@/lib/server/auth";
-import { getCommittee, getFaculty, getFees, getGallery, getStrength, sumStrength } from "@/lib/server/data";
+import { getCommittee, getFaculty, getFees, getStrength, sumStrength } from "@/lib/server/data";
 
 export const metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const admin = await requireAdmin();
-  const [committee, faculty, fees, strength, gallery] = await Promise.all([getCommittee(), getFaculty(), getFees(), getStrength(), getGallery()]);
+  const [committee, faculty, fees, strength] = await Promise.all([getCommittee(), getFaculty(), getFees(), getStrength()]);
   const totals = sumStrength(strength);
 
   const cards = [
@@ -15,12 +15,11 @@ export default async function DashboardPage() {
     { href: "/admin/faculty", label: "Faculty", value: faculty.length, detail: "staff members", site: "/administration#staff" },
     { href: "/admin/fees", label: "Fee Structure", value: fees.rows.length, detail: fees.session ? `fee heads · ${fees.session}` : "fee heads", site: "/admissions/fee-structure" },
     { href: "/admin/strength", label: "Student Strength", value: totals.boys + totals.girls, detail: `students in ${strength.length} classes`, site: "/admissions/student-strength" },
-    { href: "/admin/gallery", label: "Gallery", value: gallery.length, detail: "photos", site: "/gallery" },
   ];
 
   return (
     <>
-      <PageHeader title={`Welcome, ${admin.username}`} description="Choose a section to update. Changes appear on the website as soon as you save." />
+      <PageHeader title={`Welcome, ${admin.username}`} description="Choose a section to update. Changes appear on the website as soon as you save. (The gallery is managed in code for now.)" />
 
       <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => (
